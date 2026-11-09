@@ -1,0 +1,169 @@
+
+================================================================
+  PIZZERIA - CREANDO SOLUCIONES CON KOTLIN (S3)
+================================================================
+
+[PASO 1] Regex y Ranges
+
+  Registro de cliente (correo y teléfono validados con Regex)
+   Nombre: Camila Soto
+   Correo electrónico: camila.soto@@mail
+   Teléfono: 12345
+   Dirección: Av. Siempre Viva 742
+   [ERROR] Ingresa un correo válido, por ejemplo nombre@dominio.cl.
+   Correo electrónico: camila.soto@mail
+   [ERROR] Ingresa un teléfono de 12 dígitos, por ejemplo +56 912 345 6789.
+   Teléfono: 56 912 345 6789
+   [ERROR] Ingresa un correo válido, por ejemplo nombre@dominio.cl.
+   Correo electrónico: camila.soto@mail.cl
+   -> Cliente registrado: Camila Soto | camila.soto@mail.cl | +56 (912) 345-6789
+
+  Formato uniforme de teléfonos: +XX (XXX) XXX-XXXX
+   '569123456789' -> +56 (912) 345-6789
+   '+56 (912) 345-6789' -> +56 (912) 345-6789
+   '569-123-456-789' -> +56 (912) 345-6789
+   '12345' -> inválido
+   'abc' -> inválido
+
+  Cantidad de pizzas permitida: 1..100
+   Cantidad de pizzas Pepperoni: 0
+   [ERROR] La cantidad debe estar entre 1 y 100.
+   Cantidad de pizzas Pepperoni: 101
+   [ERROR] La cantidad debe estar entre 1 y 100.
+   Cantidad de pizzas Pepperoni: dos
+   [ERROR] Ingresa una cantidad numérica entera.
+   Cantidad de pizzas Pepperoni: 2
+   -> Cantidad aceptada: 2
+
+  Periodo de promoción: 2026-11-01 a 2026-11-30
+   2026-10-31 -> fuera del periodo
+   2026-11-10 -> dentro del periodo (aplica descuento)
+   2026-11-30 -> dentro del periodo (aplica descuento)
+   2026-12-05 -> fuera del periodo
+
+[PASO 2] Anotaciones y Reflection
+
+  Productos del catálogo y su elegibilidad (anotación @Promocionable leída con reflection)
+   - Pepperoni       Pizza        no promocionable
+   - Cuatro Quesos   PizzaGourmet PROMOCIONABLE (15%: 15% en pizzas gourmet)
+   - Combo Familiar  Combo        PROMOCIONABLE (20%: 20% en combos familiares)
+   - Bebida 1.5L     Bebida       no promocionable
+   - Queso Extra     Ingrediente  no promocionable
+
+  Reflection: propiedades y métodos de las clases del dominio
+   Clase Cliente
+   Propiedades (4):
+     - val correo: String
+     - val direccion: String
+     - val nombre: String
+     - val telefono: String
+   Métodos (6):
+     - component1(): String
+     - component2(): String
+     - component3(): String
+     - equals(other: Any?): Boolean
+     - hashCode(): Int
+     - toString(): String
+
+   Clase Producto
+   Propiedades (3):
+     - val categoria: Categoria
+     - val nombre: String
+     - val precio: Double
+   Métodos (4):
+     - detalle(): String
+     - equals(other: Any?): Boolean
+     - hashCode(): Int
+     - toString(): String
+
+   Clase Pedido
+   Propiedades (9):
+     - val cliente: Cliente
+     - val descuentoPorFecha: Double
+     - val descuentoPromocionables: Double
+     - var estado: EstadoPedido
+     - val fecha: LocalDate
+     - val id: Int
+     - val productos: Map<Producto, Int>
+     - val subtotal: Double
+     - val total: Double
+   Métodos (5):
+     - component1(): Cliente
+     - component2(): Map<Producto, Int>
+     - component3(): Double
+     - plus(otro: Pedido): Pedido
+     - resumen(): String
+
+================================================================
+  RESUMEN FINAL
+================================================================
+
+[1] Pedidos combinados con el operador +
+   Pedido #1 | Camila Soto | 2026-11-10 | En preparación
+     - Pepperoni x2 = $17.980
+     - Bebida 1.5L x1 = $2.490
+     Subtotal:               $20.470
+     Desc. promocionables:  -$0
+     Desc. por fecha:       -$2.047
+     TOTAL:                  $18.423
+
+   Pedido #2 | Camila Soto | 2026-11-12 | En preparación
+     - Pepperoni x1 = $8.990
+     - Cuatro Quesos x1 = $11.990
+     - Combo Familiar x1 = $21.990
+     Subtotal:               $42.970
+     Desc. promocionables:  -$6.197
+     Desc. por fecha:       -$3.677
+     TOTAL:                  $33.096
+
+   pedido1 + pedido2 =
+   Pedido #5 | Camila Soto | 2026-11-10 | En preparación
+     - Pepperoni x3 = $26.970
+     - Bebida 1.5L x1 = $2.490
+     - Cuatro Quesos x1 = $11.990
+     - Combo Familiar x1 = $21.990
+     Subtotal:               $63.440
+     Desc. promocionables:  -$6.197
+     Desc. por fecha:       -$5.724
+     TOTAL:                  $51.519
+
+   Total combinado $51.519 | suma de totales individuales $51.519
+   (coinciden porque ambos pedidos están dentro del periodo y los descuentos son porcentuales)
+
+   Mismos productos, distinta fecha:
+   2026-11-10 (dentro del periodo) -> $18.423
+   2026-12-05 (fuera del periodo) -> $20.470
+
+   Combinar pedidos de clientes distintos no está permitido: Solo se pueden combinar pedidos del mismo cliente (Camila Soto y Diego Muñoz).
+
+[2] Desestructuración
+   Cliente -> nombre: Camila Soto | correo: camila.soto@mail.cl | teléfono: +56 (912) 345-6789
+   Pedido  -> cliente: Camila Soto | total: $51.519
+              productos: Pepperoni x3, Bebida 1.5L x1, Cuatro Quesos x1, Combo Familiar x1
+
+[3] Productos promocionables identificados por la anotación @Promocionable
+   - Cuatro Quesos (PizzaGourmet): 15% en pizzas gourmet
+   - Combo Familiar (Combo): 20% en combos familiares
+   En el pedido combinado: Cuatro Quesos, Combo Familiar -> descuento: $6.197
+
+[4] Validación de igualdad de objetos (equals y hashCode)
+   Clientes:
+   - camila == camilaDuplicada (mismo nombre y correo, distinto formato)  -> true
+   - hashCode iguales                                                     -> true
+   - camila == camilaOtroCorreo (mismo nombre, distinto correo)           -> false
+   - camila == diego                                                      -> false
+   Productos:
+   - pepperoni == pepperoniOtroPrecio (mismo nombre y categoría)          -> true
+   - pepperoni == pepperoniIngrediente (mismo nombre, distinta categoría) -> false
+   - pepperoni === pepperoniOtroPrecio (misma instancia en memoria)       -> false
+
+   Registros sin duplicados (usan equals y hashCode):
+   - Cliente duplicado (Camila)               -> rechazado: ya existe
+   - Cliente con otro correo                  -> registrado
+   - Producto duplicado (Pepperoni)           -> rechazado: ya existe
+   - Ingrediente 'Pepperoni' (otra categoría) -> registrado
+   Clientes registrados: 3 | Productos en el catálogo: 6
+
+================================================================
+  Fin de la ejecución
+================================================================
